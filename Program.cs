@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace isanketa
 {
@@ -21,11 +21,11 @@ namespace isanketa
                  switch(Console.ReadLine()){
                     case "f": 
                     case "F":
-                        load();
+                        load("data.json",1431,32862);
                         break;
                     case "u":
                     case "U":
-                        use();
+                        use("data.json");
                         break;
                     case "q":
                         return;
@@ -36,25 +36,23 @@ namespace isanketa
             }    
 
         }
-        static void use() {
-            var data = JsonConvert.DeserializeObject<List<SurveyPage>>(File.ReadAllText("fi.json"));
+        static void use(string file) {
+            var data = JsonSerializer.Deserialize<List<SurveyPage>>(File.ReadAllText(file));
             var data2 = data
-                        .GroupBy(p => p.ucitel)
-                        .Select(g => new {jmeno = g.Key,body = g.Aggregate(
-                            0.0,
-                            (sum, next) => sum + float.Parse(next.vyborny),
-                            f => f / g.ToArray().Length), predmety = string.Join(", ", g.Select(p => p.predmet))}
-                            ).OrderBy(h => h.body)
+                .Where(d => float.Parse(d.rozviji) < 2)
+                .Where(d => float.Parse(d.vyborny) < 2)
+                .Where(d => float.Parse(d.snadne) < 2)
+                .OrderBy(d => d.rozviji);
                         ;
             foreach (var p in data2)
             {
-                System.Console.WriteLine($"{p.body.ToString("0.00")} - {p.jmeno} - {p.predmety}");
-                //System.Console.WriteLine($"{p.predmet}\nmedian hodin: {p.hodiny} | náročnost: {p.snadne} | kredity {p.kredity}\n");
+                //System.Console.WriteLine($"{p.body.ToString("0.00")} - {p.jmeno} - {p.predmety}");
+                System.Console.WriteLine($"{p.predmet}\nmedian hodin: {p.hodiny} | náročnost: {p.snadne} | rozviji: {p.rozviji} | kredity {p.kredity} | ucitel {p.vyborny} {p.ucitel} \n");
             }
  
 
         }
-        static void load(int fakulta=1433, int obdobi=14982) {
+        static void load(string file, int fakulta=1433, int obdobi=32862) {
             HttpClientHandler handler = new HttpClientHandler();
             handler.CookieContainer = new CookieContainer();
             
@@ -76,7 +74,7 @@ namespace isanketa
 
                                 var html = resSession.Content.ReadAsStringAsync().Result;
                                 try {     
-                                    var page = new SurveyPage(html);
+                                    var page = new SurveyPage(html, obdobi.ToString());
                                     surveyPages.Add(page);
                                     System.Console.WriteLine($"{id} done");
                                 }
@@ -92,8 +90,8 @@ namespace isanketa
                    } );
             
             handler.Dispose();
-            var jsonString = JsonConvert.SerializeObject(surveyPages);
-            File.WriteAllText("fi.json", jsonString);
+            var jsonString = JsonSerializer.Serialize(surveyPages);
+            File.WriteAllText(file, jsonString);
         }
     }
 }

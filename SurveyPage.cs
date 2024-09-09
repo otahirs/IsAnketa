@@ -6,7 +6,7 @@ namespace isanketa
     {
         public string fakulta { get; set; }
         public string obdobi_is { get; set; }
-        public string obdobi_anketa { get; set; }
+        public string pruzkum { get; set; }
         public string predmet { get; set; }
         public string kredity { get; set; }
         public string hodiny { get; set; }
@@ -16,13 +16,13 @@ namespace isanketa
         public string ucitel { get; set; }
 
         public SurveyPage(){}
-        public SurveyPage(string html) {
+        public SurveyPage(string html, string obdobi_is) {
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
             var dom = doc.DocumentNode;
             fakulta = dom.SelectSingleNode("//input[@name='fakulta']").Attributes["value"].Value;
-            obdobi_is = dom.SelectSingleNode("//input[@name='obdobi']").Attributes["value"].Value;
-            obdobi_anketa = dom.SelectSingleNode("//input[@name='id']").Attributes["value"].Value;
+            this.obdobi_is = obdobi_is;
+            pruzkum = dom.SelectSingleNode("//input[@name='id']").Attributes["value"].Value;
             predmet = dom.SelectSingleNode("//main//h3").InnerText;
             if(predmet.Contains(':'))
                 predmet = predmet.Split(':')[1].Split(' ')[0];
